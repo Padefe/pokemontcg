@@ -1,6 +1,9 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { createClient } from '@supabase/supabase-js';
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
