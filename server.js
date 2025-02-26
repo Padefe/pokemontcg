@@ -1,20 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 const express = require('express');
-const mysql = require('mysql2');
 const cors = require('cors');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// MySQL database connection
-const db = mysql.createConnection({
-    host: 'localhost',  // Update this for production if necessary
-    user: 'Padefe',
-    password: 'Dracco55',
-    database: 'pokemon_tcg'
-});
 
 const app = express();
 const port = 3000;
@@ -23,17 +14,25 @@ app.use(express.json());
 app.use(cors({ origin: '*' }));
 
 // Function to get random cards based on region and rarity
-function getCardsByRegionAndRarity(region, rarity, limit) {
-    return new Promise((resolve, reject) => {
-        const query = 'SELECT * FROM cards WHERE region LIKE ? AND rarity = ? ORDER BY RAND() LIMIT ?';
-        db.query(query, [region, rarity, limit], (err, result) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(result);
-            }
-        });
-    });
+async function getCardsByRegionAndRarity(region, rarity, limit) {
+    try {
+        const { data, error } = await supabase
+            .from('cards')
+            .select('*')
+            .ilike('region', region)  // Using ilike for case-insensitive matching
+            .eq('rarity', rarity)
+            .limit(limit)
+            .order('RANDOM()');  // Randomize the result
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    } catch (err) {
+        console.error('Error fetching cards:', err);
+        throw err;
+    }
 }
 
 // Function to create a region booster pack
@@ -100,54 +99,71 @@ app.get('/booster-pack/:region', async (req, res) => {
 
 // Update pull_amount in the database
 async function incrementPullAmount(dex_number) {
-    return new Promise((resolve, reject) => {
-        const query = 'UPDATE cards SET pull_amount = pull_amount + 1 WHERE dex_number = ?';
-        db.query(query, [dex_number], (err, result) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(result);
-            }
-        });
-    });
+    try {
+        const { data, error } = await supabase
+            .from('cards')
+            .update({ pull_amount: supabase.raw('pull_amount + 1') })
+            .eq('dex_number', dex_number);
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    } catch (err) {
+        console.error('Error updating pull amount:', err);
+        throw err;
+    }
 }
 
 // Route to get card details by name
-app.get('/cards/:cardName', (req, res) => {
+app.get('/cards/:cardName', async (req, res) => {
     const cardName = req.params.cardName;
-    const query = 'SELECT * FROM cards WHERE name = ?';
-    db.query(query, [cardName], (err, results) => {
-        if (err) {
+    try {
+        const { data, error } = await supabase
+            .from('cards')
+            .select('*')
+            .eq('name', cardName);
+
+        if (error) {
             res.status(500).json({ error: 'Database error' });
             return;
         }
-        if (results.length > 0) {
-            res.json(results[0]);
+        if (data.length > 0) {
+            res.json(data[0]);
         } else {
             res.status(404).json({ error: 'Card not found' });
         }
-    });
+    } catch (err) {
+        res.status(500).json({ error: 'Error fetching card' });
+    }
 });
 
 // Route to sell a card (update pull_amount)
-app.post('/card-sell/:cardName', (req, res) => {
+app.post('/card-sell/:cardName', async (req, res) => {
     const { cardName, newPullAmount } = req.body;
     if (typeof newPullAmount !== 'number') {
         return res.status(400).json({ error: 'Invalid pull_amount value' });
     }
 
-    const query = 'UPDATE cards SET pull_amount = ? WHERE name = ?';
-    db.query(query, [newPullAmount, cardName], (err, results) => {
-        if (err) {
+    try {
+        const { data, error } = await supabase
+            .from('cards')
+            .update({ pull_amount: newPullAmount })
+            .eq('name', cardName);
+
+        if (error) {
             res.status(500).json({ error: 'Database error' });
             return;
         }
-        if (results.affectedRows > 0) {
+        if (data.length > 0) {
             res.json({ success: true });
         } else {
             res.status(404).json({ error: 'Card not found' });
         }
-    });
+    } catch (err) {
+        res.status(500).json({ error: 'Error selling card' });
+    }
 });
 
 // Start the server
