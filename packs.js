@@ -70,9 +70,10 @@ function displayPacks() {
     const regionName = region.replace(/^region/, '');
 
     const packImage = document.createElement('img');
+    console.log(${regionName});
     // Set the image source using the cleaned region name
-    packImage.src = `public/images/${regionName}.jpg`;  
-    packImage.alt = `public/images/${regionName} pack`;
+    packImage.src = `/images/${regionName}.jpg`;  
+    packImage.alt = `${regionName} pack`;
 
     const packQuantity = document.createElement('span');
     packQuantity.classList.add('quantity');
