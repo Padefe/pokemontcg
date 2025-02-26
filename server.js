@@ -1,9 +1,14 @@
+import postgres from 'postgres';
+
+
+
 import dotenv from 'dotenv';
 dotenv.config();
 
 import { createClient } from '@supabase/supabase-js';
 import express from 'express';
 import cors from 'cors';
+import sql from './db.js';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -15,32 +20,27 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: '*' }));
 
-// Function to get random cards based on region and rarity
-async function getCardsByRegionAndRarity(region, rarity, limit) {
+// Root route
+app.get('/', (req, res) => {
+    res.send('Welcome to the Pokémon TCG API!');
+});
+
+async function testConnection() {
     try {
-        const { data, error } = await supabase
-            .from('pokemontcg')
-            .select('*')
-            .ilike('region', region)  // Using ilike for case-insensitive matching
-            .eq('rarity', rarity)
-            .limit(limit)
-            .order('RANDOM()');  // Randomize the result
-
-        if (error) {
-            throw error;
-        }
-
-        return data;
-    } catch (err) {
-        console.error('Error fetching cards:', err);
-        throw err;
+      await sql`SELECT 1`; // Simple query to test the connection
+      console.log('Connected to Supabase!');
+    } catch (error) {
+      console.error('Connection error:', error);
     }
-}
+  }
+  
+  testConnection();
 
 // Function to create a region booster pack
 async function createRegionBoosterPack(region) {
     try {
         const commonCards = await getCardsByRegionAndRarity(region, 'common', 4);
+        console.log(region);
         const rareCard = await getCardsByRegionAndRarity(region, 'rare', 1);
         const boosterPack = [...commonCards, ...rareCard];
         for (const card of boosterPack) {
@@ -70,7 +70,7 @@ async function createAllRegionsBoosterPack() {
 }
 
 // Route to generate a booster pack for all regions
-app.get('/api/booster-pack/all', async (req, res) => {
+app.get('/booster-pack/all', async (req, res) => {
     try {
         const boosterPack = await createAllRegionsBoosterPack();
         res.json({
@@ -84,7 +84,7 @@ app.get('/api/booster-pack/all', async (req, res) => {
 });
 
 // Route to generate a booster pack for a specific region
-app.get('/api/booster-pack/:region', async (req, res) => {
+app.get('/booster-pack/:region', async (req, res) => {
     const { region } = req.params;
     try {
         const boosterPack = await createRegionBoosterPack(region);
@@ -119,7 +119,7 @@ async function incrementPullAmount(dex_number) {
 }
 
 // Route to get card details by name
-app.get('/api/cards/:cardName', async (req, res) => {
+app.get('/cards/:cardName', async (req, res) => {
     const cardName = req.params.cardName;
     try {
         const { data, error } = await supabase
@@ -142,7 +142,7 @@ app.get('/api/cards/:cardName', async (req, res) => {
 });
 
 // Route to sell a card (update pull_amount)
-app.post('/api/card-sell/:cardName', async (req, res) => {
+app.post('/card-sell/:cardName', async (req, res) => {
     const { cardName, newPullAmount } = req.body;
     if (typeof newPullAmount !== 'number') {
         return res.status(400).json({ error: 'Invalid pull_amount value' });
@@ -166,4 +166,9 @@ app.post('/api/card-sell/:cardName', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: 'Error selling card' });
     }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
