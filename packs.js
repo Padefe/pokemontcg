@@ -126,43 +126,49 @@ function openPackCanvas(regionName, packs) {
     // Add the close button to the canvas
     canvas.appendChild(closeButton);
 
-    // Fetch the booster pack cards for the selected region from the backend
-    fetch(`http://localhost:3000/booster-pack/${regionName}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.success && data.boosterPack) {
-          // Create the card list and display the cards
-          const cardList = document.createElement('div');
-          cardList.classList.add('card-list');
-
-          // Iterate over the booster pack cards
-          data.boosterPack.forEach(card => {
-            const cardDiv = document.createElement('div');
-            cardDiv.classList.add('card');
-
-            // Add the card HTML
-            cardDiv.innerHTML = `
-              <img src="${card.image_url}" alt="${card.name}">
-              <div class="card-name">${card.name}</div>
-              <div class="rarity">${card.card_value}</div>
-            `;
-
-            // Check if the card's pull_amount is 1 (First Pull)
-            if (card.pull_amount === 0) {
-              const firstPullTag = document.createElement('span');
-              firstPullTag.classList.add('first-pull-tag');
-              firstPullTag.textContent = 'First Pull';
-              cardDiv.appendChild(firstPullTag);
-            }
-
-            // Append the card to the list
-            cardList.appendChild(cardDiv);
-          });
-
-          // Append the card list to the canvas
-          canvas.appendChild(cardList);
+    // Fetch the booster pack cards for the selected region from Supabase
+    supabase
+      .from('booster_packs') // Assuming you have a table for booster packs
+      .select('*')
+      .eq('region', regionName)  // Assuming region is a field in the table
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Error fetching booster pack:', error.message);
         } else {
-          console.error('Failed to fetch booster pack:', data.message);
+          if (data && data.length > 0) {
+            // Create the card list and display the cards
+            const cardList = document.createElement('div');
+            cardList.classList.add('card-list');
+
+            // Iterate over the booster pack cards
+            data.forEach(card => {
+              const cardDiv = document.createElement('div');
+              cardDiv.classList.add('card');
+
+              // Add the card HTML
+              cardDiv.innerHTML = `
+                <img src="${card.image_url}" alt="${card.name}">
+                <div class="card-name">${card.name}</div>
+                <div class="rarity">${card.card_value}</div>
+              `;
+
+              // Check if the card's pull_amount is 1 (First Pull)
+              if (card.pull_amount === 0) {
+                const firstPullTag = document.createElement('span');
+                firstPullTag.classList.add('first-pull-tag');
+                firstPullTag.textContent = 'First Pull';
+                cardDiv.appendChild(firstPullTag);
+              }
+
+              // Append the card to the list
+              cardList.appendChild(cardDiv);
+            });
+
+            // Append the card list to the canvas
+            canvas.appendChild(cardList);
+          } else {
+            console.error('No booster pack data found for this region.');
+          }
         }
       })
       .catch(error => {
