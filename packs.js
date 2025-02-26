@@ -128,9 +128,9 @@ function openPackCanvas(regionName, packs) {
 
     // Fetch the booster pack cards for the selected region from Supabase
     supabase
-      .from('booster_packs') // Assuming you have a table for booster packs
+      .from('pokemontcg')
       .select('*')
-      .eq('region', regionName)  // Assuming region is a field in the table
+      .eq('region', regionName)  // fetiching from region
       .then(({ data, error }) => {
         if (error) {
           console.error('Error fetching booster pack:', error.message);
