@@ -71,8 +71,8 @@ function displayPacks() {
 
     const packImage = document.createElement('img');
     // Set the image source using the cleaned region name
-    packImage.src = `/public/images/${regionName}.jpg`;  
-    packImage.alt = `/public/images/${regionName} pack`;
+    packImage.src = `/images/${regionName}.jpg`;  
+    packImage.alt = `/images/${regionName} pack`;
 
     const packQuantity = document.createElement('span');
     packQuantity.classList.add('quantity');
