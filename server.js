@@ -1,19 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
-
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
 
-
-
+// Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// MySQL database connection
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'Padefe',  // Replace with your MySQL username
-    password: 'Dracco55',  // Replace with your MySQL password
+    host: 'localhost',  // Update this for production if necessary
+    user: 'Padefe',
+    password: 'Dracco55',
     database: 'pokemon_tcg'
 });
 
@@ -21,8 +20,6 @@ const app = express();
 const port = 3000;
 
 app.use(express.json());
-
-// Enable CORS for all routes
 app.use(cors({ origin: '*' }));
 
 // Function to get random cards based on region and rarity
@@ -37,10 +34,9 @@ function getCardsByRegionAndRarity(region, rarity, limit) {
             }
         });
     });
-
 }
 
-// Function to create a booster pack for a specific region
+// Function to create a region booster pack
 async function createRegionBoosterPack(region) {
     try {
         const commonCards = await getCardsByRegionAndRarity(region, 'common', 4);
@@ -72,11 +68,10 @@ async function createAllRegionsBoosterPack() {
     }
 }
 
-
 // Route to generate a booster pack for all regions
 app.get('/booster-pack/all', async (req, res) => {
     try {
-        const boosterPack = await createAllRegionsBoosterPack();  // This calls the correct function
+        const boosterPack = await createAllRegionsBoosterPack();
         res.json({
             success: true,
             boosterPack: boosterPack,
@@ -103,11 +98,11 @@ app.get('/booster-pack/:region', async (req, res) => {
     }
 });
 
-// Function to update pull_amount in the database
-async function incrementPullAmount(pull_amount) {
+// Update pull_amount in the database
+async function incrementPullAmount(dex_number) {
     return new Promise((resolve, reject) => {
         const query = 'UPDATE cards SET pull_amount = pull_amount + 1 WHERE dex_number = ?';
-        db.query(query, [pull_amount], (err, result) => {
+        db.query(query, [dex_number], (err, result) => {
             if (err) {
                 reject(err);
             } else {
@@ -117,61 +112,36 @@ async function incrementPullAmount(pull_amount) {
     });
 }
 
-// Route to get the user's collection
-app.get('/collection', async (req, res) => {
-    try {
-        const query = 'SELECT * FROM cards';
-        db.query(query, (err, result) => {
-            if (err) {
-                console.error('Error fetching collection:', err);
-                res.json({ success: false, message: 'Error fetching collection' });
-            } else {
-                res.json({
-                    success: true,
-                    collection: result
-                });
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching collection:', error);
-        res.json({ success: false, message: 'Error fetching collection' });
-    }
-});
-
 // Route to get card details by name
 app.get('/cards/:cardName', (req, res) => {
     const cardName = req.params.cardName;
-    // Query to get card details
     const query = 'SELECT * FROM cards WHERE name = ?';
     db.query(query, [cardName], (err, results) => {
         if (err) {
             res.status(500).json({ error: 'Database error' });
             return;
         }
-
         if (results.length > 0) {
-            res.json(results[0]);  // Send the first matching card
+            res.json(results[0]);
         } else {
             res.status(404).json({ error: 'Card not found' });
         }
     });
 });
 
-// Route to get card details by name
+// Route to sell a card (update pull_amount)
 app.post('/card-sell/:cardName', (req, res) => {
     const { cardName, newPullAmount } = req.body;
     if (typeof newPullAmount !== 'number') {
         return res.status(400).json({ error: 'Invalid pull_amount value' });
     }
 
-    // Query to get card details
     const query = 'UPDATE cards SET pull_amount = ? WHERE name = ?';
     db.query(query, [newPullAmount, cardName], (err, results) => {
         if (err) {
             res.status(500).json({ error: 'Database error' });
             return;
         }
-
         if (results.affectedRows > 0) {
             res.json({ success: true });
         } else {
