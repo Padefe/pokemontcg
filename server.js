@@ -8,7 +8,6 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
-const port = 3000;
 
 app.use(express.json());
 app.use(cors({ origin: '*' }));
@@ -68,7 +67,7 @@ async function createAllRegionsBoosterPack() {
 }
 
 // Route to generate a booster pack for all regions
-app.get('/booster-pack/all', async (req, res) => {
+app.get('/api/booster-pack/all', async (req, res) => {
     try {
         const boosterPack = await createAllRegionsBoosterPack();
         res.json({
@@ -82,7 +81,7 @@ app.get('/booster-pack/all', async (req, res) => {
 });
 
 // Route to generate a booster pack for a specific region
-app.get('/booster-pack/:region', async (req, res) => {
+app.get('/api/booster-pack/:region', async (req, res) => {
     const { region } = req.params;
     try {
         const boosterPack = await createRegionBoosterPack(region);
@@ -117,7 +116,7 @@ async function incrementPullAmount(dex_number) {
 }
 
 // Route to get card details by name
-app.get('/cards/:cardName', async (req, res) => {
+app.get('/api/cards/:cardName', async (req, res) => {
     const cardName = req.params.cardName;
     try {
         const { data, error } = await supabase
@@ -140,7 +139,7 @@ app.get('/cards/:cardName', async (req, res) => {
 });
 
 // Route to sell a card (update pull_amount)
-app.post('/card-sell/:cardName', async (req, res) => {
+app.post('/api/card-sell/:cardName', async (req, res) => {
     const { cardName, newPullAmount } = req.body;
     if (typeof newPullAmount !== 'number') {
         return res.status(400).json({ error: 'Invalid pull_amount value' });
