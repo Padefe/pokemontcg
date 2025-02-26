@@ -1,4 +1,6 @@
 const LOCAL_STORAGE_KEY = 'tcgState';  // Consistent localStorage key
+// Initialize Supabase client (remove if no longer needed as data is fetched from the server)
+const supabase = createClient('https://your-project-url.supabase.co', 'your-anon-key');
 
 function initializeState() {
   let state = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY));

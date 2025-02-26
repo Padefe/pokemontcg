@@ -17,7 +17,7 @@ app.use(cors({ origin: '*' }));
 async function getCardsByRegionAndRarity(region, rarity, limit) {
     try {
         const { data, error } = await supabase
-            .from('cards')
+            .from('pokemontcg')
             .select('*')
             .ilike('region', region)  // Using ilike for case-insensitive matching
             .eq('rarity', rarity)
@@ -101,7 +101,7 @@ app.get('/booster-pack/:region', async (req, res) => {
 async function incrementPullAmount(dex_number) {
     try {
         const { data, error } = await supabase
-            .from('cards')
+            .from('pokemontcg')
             .update({ pull_amount: supabase.raw('pull_amount + 1') })
             .eq('dex_number', dex_number);
 
@@ -121,7 +121,7 @@ app.get('/cards/:cardName', async (req, res) => {
     const cardName = req.params.cardName;
     try {
         const { data, error } = await supabase
-            .from('cards')
+            .from('pokemontcg')
             .select('*')
             .eq('name', cardName);
 
@@ -148,7 +148,7 @@ app.post('/card-sell/:cardName', async (req, res) => {
 
     try {
         const { data, error } = await supabase
-            .from('cards')
+            .from('pokemontcg')
             .update({ pull_amount: newPullAmount })
             .eq('name', cardName);
 
@@ -164,9 +164,4 @@ app.post('/card-sell/:cardName', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: 'Error selling card' });
     }
-});
-
-// Start the server
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
 });
