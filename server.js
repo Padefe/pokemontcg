@@ -1,40 +1,53 @@
-import postgres from 'postgres';
-
-
-
 import dotenv from 'dotenv';
+import pkg from 'pg'; // Default import
+
+const { Client } = pkg; // Destructure the Client from the imported package
+
+
 dotenv.config();
 
-import { createClient } from '@supabase/supabase-js';
+//import { createClient } from '@supabase/supabase-js';
 import express from 'express';
 import cors from 'cors';
-import sql from './db.js';
+//import sql from './db.js';
+
+
 
 // Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
+/*const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
+*/
+
+//const connectionString = process.env.DATABASE_URL
+//const sql = pkg(connectionString)
+
+//export default sql
 
 const app = express();
 
-app.use(express.json());
-app.use(cors({ origin: '*' }));
+//app.use(express.json());
+//app.use(cors({ origin: '*' }));
 
 // Root route
-app.get('/', (req, res) => {
-    res.send('Welcome to the Pokémon TCG API!');
-});
+//app.get('/', (req, res) => {
+//    res.send('Welcome to the Pokémon TCG API!');
+//});
 
-async function testConnection() {
-    try {
-      await sql`SELECT 1`; // Simple query to test the connection
-      console.log('Connected to Supabase!');
-    } catch (error) {
-      console.error('Connection error:', error);
-    }
-  }
+const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false, // Allow self-signed certificates
+    },
+  });
   
-  testConnection();
+  client.connect()
+  .then(() => {
+    console.log('Connected to Supabase!');
+  })
+  .catch(err => {
+    console.error('Connection error:', err);
+  });
 
 // Function to create a region booster pack
 async function createRegionBoosterPack(region) {
