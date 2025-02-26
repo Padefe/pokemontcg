@@ -1,6 +1,14 @@
+import { createClient } from '@supabase/supabase-js';
+
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+
+
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const db = mysql.createConnection({
     host: 'localhost',

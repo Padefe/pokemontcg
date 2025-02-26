@@ -158,7 +158,16 @@ async function sellCard(cardName, cardValue) {
 // Function to sell all duplicate cards (cards with pull_amount > 1)
 async function sellAllDuplicates() {
     try {
-        const response = await fetch('http://localhost:3000/collection');
+        const response = await supabase
+        .from('pokemontcg')
+        .select('*');
+
+        if (response.error) {
+            console.error("Error fetching collection:", response.error.message);
+        } else {
+            console.log("Fetched collection data:", response.data);
+        }
+
         const data = await response.json();
 
         if (data.success && data.collection) {
@@ -197,7 +206,16 @@ document.getElementById('sellDuplicates').addEventListener('click', sellAllDupli
 // Function to sell all cards (including all copies)
 async function sellAllCards() {
     try {
-        const response = await fetch('http://localhost:3000/collection');
+        const response = await supabase
+        .from('pokemontcg')
+        .select('*');
+
+        if (response.error) {
+            console.error("Error fetching collection:", response.error.message);
+        } else {
+            console.log("Fetched collection data:", response.data);
+        }
+
         const data = await response.json();
 
         if (data.success && data.collection) {
@@ -244,6 +262,16 @@ async function getCardByName(cardName) {
         return null;
     }
 }
+const response = await supabase
+.from('pokemontcg')
+.select('cardName');
+
+if (response.error) {
+    console.error("Error fetching collection:", response.error.message);
+} else {
+    console.log("Fetched collection data:", response.data);
+}
+
 
 // Update the card pull_amount in the database (backend)
 async function updateCardPullAmount(cardName, newPullAmount) {
@@ -310,4 +338,4 @@ fetchCollection();
 document.addEventListener('DOMContentLoaded', () => {
     initializeState(); // Ensure state is initialized
     updateMoneyDisplay(); // Show the current money when the page loads
-  });
+});
